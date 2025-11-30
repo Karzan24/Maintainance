@@ -6,28 +6,45 @@ use App\Models\MaintenanceRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User; 
 
 class MaintenanceRequestController extends Controller
 {
+    /**
+     * Display a listing of ALL requests for the Admin/Technician Dashboard.
+     */
     public function index()
     {
+        // Fetch the current user object for the view
+        $user = Auth::user(); 
+        
+        // 1. Fetch all requests, eager-loading the associated user data
         $allRequests = MaintenanceRequest::with('user')
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // 2. Calculate Dashboard Statistics
         $stats = [
             'total_requests' => $allRequests->count(),
             'today_requests' => MaintenanceRequest::whereDate('created_at', today())->count(),
-            'pending_requests' => $allRequests->whereIn('status', ['pending', 'in_progress'])->count(),
+            'pending_requests' => $allRequests->whereIn('status', ['pending', 'in_progress'])->count(), 
             'done_requests' => $allRequests->where('status', 'completed')->count(),
         ];
+        
+        // --- REMOVED: $userRequests definition unnecessary for Admin Dashboard ---
 
+        // 3. Pass data to the dashboard view
         return view('dashboard', [
             'requests' => $allRequests,
             'stats' => $stats,
+            'user' => $user, 
+            // --- REMOVED: Passing $userRequests is unnecessary ---
         ]);
     }
 
+    /**
+     * Display a listing of requests submitted by the currently authenticated user (Client View).
+     */
     public function clientIndex()
     {
         $userRequests = Auth::user()->maintenanceRequests()
@@ -39,11 +56,17 @@ class MaintenanceRequestController extends Controller
         ]);
     }
 
+    /**
+     * Show the form for creating a new maintenance request.
+     */
     public function create()
     {
         return view('create');
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -88,21 +111,18 @@ class MaintenanceRequestController extends Controller
         return redirect()->route('my_requests')->with('success', "Request #{$maintenanceRequest->id} marked as Completed!");
     }
 
-    /**
-     * SAFE DELETE — no disabling FK checks
-     */
-   public function destroy($id)
-{
-    $maintenanceRequest = MaintenanceRequest::find($id);
+    public function destroy($id)
+    {
+        $maintenanceRequest = MaintenanceRequest::find($id);
 
-    if (!$maintenanceRequest) {
+        if (!$maintenanceRequest) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Maintenance request not found.');
+        }
+
+        $maintenanceRequest->delete();
+
         return redirect()->route('dashboard')
-            ->with('error', 'Maintenance request not found.');
+            ->with('success', "Request #{$maintenanceRequest->id} has been deleted.");
     }
-
-    $maintenanceRequest->delete();
-
-    return redirect()->route('dashboard')
-        ->with('success', "Request #{$maintenanceRequest->id} has been deleted.");
-}
 }

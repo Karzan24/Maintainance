@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
-    <title>{{ config('app.name', 'Maintenance App') }} - Login</title>
+    <title>{{ config('app.name', 'Maintenance App') }} - Register</title>
     
     <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -20,7 +20,7 @@
             align-items: center;
             justify-content: center;
         }
-        .login-card {
+        .register-card {
             max-width: 500px;
             width: 90%;
             border-radius: 1rem;
@@ -37,62 +37,74 @@
 </head>
 <body>
 
-    <div class="card login-card">
+    <div class="card register-card">
         <div class="card-body text-center">
-            <div class="header-icon">🛠️</div>
+            <div class="header-icon">📝</div>
             
             <h1 class="card-title fw-bolder mb-2" style="font-size: 2.25rem;">
-                Request Maintenance
+                Create Your Account
             </h1>
             <p class="text-muted mb-4">
-                Sign in to quickly submit and track your repair and facility requests.
+                Enter your details to register and access the maintenance portal.
             </p>
 
-            <form method="POST" action="{{ route('login') }}">
+            <!-- Form targets the store method in the RegisteredUserController -->
+            <form method="POST" action="{{ route('register') }}">
                 @csrf 
+
+                <!-- Name Field -->
+                <div class="mb-3">
+                    <label for="nameInput" class="form-label visually-hidden">Full Name</label>
+                    <input type="text" class="form-control form-control-lg @error('name') is-invalid @enderror" 
+                           id="nameInput" name="name" value="{{ old('name') }}" placeholder="Full Name" required autofocus>
+                    
+                    @error('name')
+                        <div class="invalid-feedback text-start">{{ $message }}</div>
+                    @enderror
+                </div>
 
                 <!-- Email Field -->
                 <div class="mb-3">
                     <label for="emailInput" class="form-label visually-hidden">Email address</label>
                     <input type="email" class="form-control form-control-lg @error('email') is-invalid @enderror" 
-                           id="emailInput" name="email" placeholder="Email address" required autofocus>
+                           id="emailInput" name="email" value="{{ old('email') }}" placeholder="Email address" required>
                     
                     @error('email')
-                        <div class="invalid-feedback text-start">
-                            {{ $message }}
-                        </div>
+                        <div class="invalid-feedback text-start">{{ $message }}</div>
                     @enderror
                 </div>
                 
                 <!-- Password Field -->
-                <div class="mb-4">
+                <div class="mb-3">
                     <label for="passwordInput" class="form-label visually-hidden">Password</label>
                     <input type="password" class="form-control form-control-lg @error('password') is-invalid @enderror" 
-                           id="passwordInput" name="password" placeholder="Password" required>
+                           id="passwordInput" name="password" placeholder="Password" required autocomplete="new-password">
                     
                     @error('password')
-                        <div class="invalid-feedback text-start">
-                            {{ $message }}
-                        </div>
+                        <div class="invalid-feedback text-start">{{ $message }}</div>
                     @enderror
                 </div>
+                
+                <!-- Confirm Password Field -->
+                <div class="mb-4">
+                    <label for="passwordConfirmInput" class="form-label visually-hidden">Confirm Password</label>
+                    <input type="password" class="form-control form-control-lg" 
+                           id="passwordConfirmInput" name="password_confirmation" placeholder="Confirm Password" required>
+                </div>
 
-                <!-- Login Button -->
+                <!-- Register Button -->
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-primary btn-lg fw-bold">
-                        Log In
+                        Register
                     </button>
                 </div>
 
                 <hr class="my-4">
 
-                <!-- Forgot Password / Register Links -->
-                <div class="d-flex justify-content-between">
-                    <a href="#" class="text-decoration-none text-secondary small">Forgot Password?</a>
-                    
-                    <!-- NEW REGISTER BUTTON -->
-                    <a href="{{ route('register') }}" class="text-decoration-none text-secondary small fw-bold">
-                        Register New Account
+                <!-- Link to Login -->
+                <div class="text-center">
+                    <a href="{{ route('login') }}" class="text-decoration-none text-secondary small">
+                        Already have an account? Log In
                     </a>
                 </div>
             </form>

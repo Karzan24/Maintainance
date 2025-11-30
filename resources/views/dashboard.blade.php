@@ -37,12 +37,20 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div>
                 <h1 class="h3 fw-bold mb-0 text-primary">Admin Maintenance Dashboard</h1>
-                <p class="mb-0 text-muted small">Welcome, {{ Auth::user()->name }}.</p>
+                <p class="mb-0 text-muted small">Welcome, {{ $user->name }}.</p>
             </div>
             <div>
+                <!-- My Account Button (NEW) -->
+                <a href="{{ route('profile.edit') }}" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-person-circle"></i> My Account
+                </a>
+                
+                <!-- New Request Button -->
                 <a href="{{ route('requests.create') }}" class="btn btn-success me-2">
                     <i class="bi bi-plus-circle"></i> New Request
                 </a>
+                
+                <!-- Logout Form -->
                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-outline-danger">Logout</button>
@@ -111,93 +119,92 @@
         </div>
 
         <!-- 2. ALL REQUESTS TABLE -->
-      <!-- 2. ALL REQUESTS TABLE -->
-<h4 class="mb-3 fw-bold text-secondary">All Maintenance Requests</h4>
+        <h4 class="mb-3 fw-bold text-secondary">All Maintenance Requests</h4>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-0 table-responsive">
-        @if($requests->isEmpty())
-            <div class="alert alert-info m-4">No maintenance requests have been submitted yet.</div>
-        @else
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Title</th>
-                        <th scope="col">Location</th>
-                        <th scope="col">Submitted By</th>
-                        <th scope="col">Priority</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($requests as $maintenanceRequest)
-                        <tr>
-                            <td>{{ $maintenanceRequest->id }}</td>
-                            <td>
-                                <div class="fw-bold">{{ $maintenanceRequest->title }}</div>
-                                <small class="text-muted text-truncate d-block" style="max-width: 250px;">
-                                    {{ Str::limit($maintenanceRequest->description, 50) }}
-                                </small>
-                            </td>
-                            <td>{{ $maintenanceRequest->location ?? 'N/A' }}</td>
-                            <td>{{ $maintenanceRequest->user->name }} ({{ $maintenanceRequest->user->email }})</td>
-                            <td>
-                                <span class="badge bg-{{ 
-                                    $maintenanceRequest->priority == 'urgent' ? 'danger' : (
-                                    $maintenanceRequest->priority == 'high' ? 'warning' : 'info'
-                                ) }} text-uppercase">
-                                    {{ $maintenanceRequest->priority }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="status-badge text-uppercase status-{{ $maintenanceRequest->status }}">
-                                    {{ $maintenanceRequest->status == 'pending' ? 'NEW' : str_replace('_', ' ', $maintenanceRequest->status) }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="d-flex">
-                                    <!-- ACCEPT / IN-PROGRESS BUTTON -->
-                                    @if ($maintenanceRequest->status == 'pending')
-                                        <form method="POST" action="{{ route('requests.update_status', $maintenanceRequest) }}" class="me-2">
-                                            @csrf
-                                            <input type="hidden" name="new_status" value="in_progress">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">
-                                                <i class="bi bi-check-lg"></i> Accept
-                                            </button>
-                                        </form>
-                                    
-                                    <!-- COMPLETE BUTTON (Admin marks it done) -->
-                                    @elseif ($maintenanceRequest->status == 'in_progress')
-                                        <form method="POST" action="{{ route('requests.update_status', $maintenanceRequest) }}" class="me-2">
-                                            @csrf
-                                            <input type="hidden" name="new_status" value="completed">
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-gear-fill"></i> Complete
-                                            </button>
-                                        </form>
-                                    @endif
-                                    
-                                    <!-- DELETE BUTTON -->
-                                    <form method="POST" action="{{ route('requests.destroy.explicit', ['maintenanceRequest' => $maintenanceRequest->id]) }}" 
-                                          class="d-inline" 
-                                          onsubmit="return confirm('WARNING: Are you sure you want to delete this request permanently?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endif
-    </div>
-</div>
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0 table-responsive">
+                @if($requests->isEmpty())
+                    <div class="alert alert-info m-4">No maintenance requests have been submitted yet.</div>
+                @else
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">Location</th>
+                                <th scope="col">Submitted By</th>
+                                <th scope="col">Priority</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($requests as $maintenanceRequest)
+                                <tr>
+                                    <td>{{ $maintenanceRequest->id }}</td>
+                                    <td>
+                                        <div class="fw-bold">{{ $maintenanceRequest->title }}</div>
+                                        <small class="text-muted text-truncate d-block" style="max-width: 250px;">
+                                            {{ Str::limit($maintenanceRequest->description, 50) }}
+                                        </small>
+                                    </td>
+                                    <td>{{ $maintenanceRequest->location ?? 'N/A' }}</td>
+                                    <td>{{ $maintenanceRequest->user->name }} ({{ $maintenanceRequest->user->email }})</td>
+                                    <td>
+                                        <span class="badge bg-{{ 
+                                            $maintenanceRequest->priority == 'urgent' ? 'danger' : (
+                                            $maintenanceRequest->priority == 'high' ? 'warning' : 'info'
+                                        ) }} text-uppercase">
+                                            {{ $maintenanceRequest->priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge text-uppercase status-{{ $maintenanceRequest->status }}">
+                                            {{ $maintenanceRequest->status == 'pending' ? 'NEW' : str_replace('_', ' ', $maintenanceRequest->status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex">
+                                            <!-- ACCEPT / IN-PROGRESS BUTTON -->
+                                            @if ($maintenanceRequest->status == 'pending')
+                                                <form method="POST" action="{{ route('requests.update_status', $maintenanceRequest) }}" class="me-2">
+                                                    @csrf
+                                                    <input type="hidden" name="new_status" value="in_progress">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                                        <i class="bi bi-check-lg"></i> Accept
+                                                    </button>
+                                                </form>
+                                            
+                                            <!-- COMPLETE BUTTON (Admin marks it done) -->
+                                            @elseif ($maintenanceRequest->status == 'in_progress')
+                                                <form method="POST" action="{{ route('requests.update_status', $maintenanceRequest) }}" class="me-2">
+                                                    @csrf
+                                                    <input type="hidden" name="new_status" value="completed">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-gear-fill"></i> Complete
+                                                    </button>
+                                                </form>
+                                            @endif
+                                            
+                                            <!-- DELETE BUTTON -->
+                                            <form method="POST" action="{{ route('requests.destroy', $maintenanceRequest) }}" 
+                                                class="d-inline" 
+                                                onsubmit="return confirm('WARNING: Are you sure you want to delete this request permanently?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
 
     </div>
 

@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController; 
 use App\Http\Controllers\MaintenanceRequestController;
+use App\Http\Controllers\ProfileController; // <-- NEW IMPORT
 
 /*
 |--------------------------------------------------------------------------
@@ -13,44 +15,39 @@ use App\Http\Controllers\MaintenanceRequestController;
 // --- PUBLIC ROUTES (No authentication required) ---
 
 // Login Screen (GET / and GET /login)
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+Route::get('/', function () { return view('welcome'); })->name('welcome');
+Route::get('/login', function () { return view('welcome'); })->name('login');
 
-Route::get('/login', function () {
-    return view('welcome'); 
-})->name('login');
-
-// Login Form Submission Handler (POST /login)
+// Login Submission Handler (POST /login)
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('guest');
+
+
+// --- REGISTRATION ROUTES ---
+Route::get('/register', [RegisteredUserController::class, 'create'])->middleware('guest')->name('register');
+Route::post('/register', [RegisteredUserController::class, 'store'])->middleware('guest');
 
 
 // --- AUTHENTICATED ROUTES (User must be logged in) ---
 Route::middleware('auth')->group(function () {
     
-    // 1. ADMIN DASHBOARD ROUTE (All requests)
+    // 1. ADMIN DASHBOARD ROUTE
     Route::get('/dashboard', [MaintenanceRequestController::class, 'index'])->name('dashboard');
 
-    // 2. CLIENT VIEW ROUTE (Only my requests)
-    Route::get('/my-requests', [MaintenanceRequestController::class, 'clientIndex'])->name('my_requests');
-
+    // 2. USER PROFILE ROUTES (Combined Account Info + My Requests) <-- UPDATED
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit'); 
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update'); 
+    
     // 3. LOGOUT ROUTE
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // 4. MAINTENANCE REQUEST ROUTES (Resource for CRUD)
-    // CRITICAL FIX: Explicitly include 'create', 'store', and 'destroy' to guarantee the routes exist.
+    // 4. MAINTENANCE REQUEST ROUTES (CRUD)
     Route::resource('requests', MaintenanceRequestController::class)->only([
         'create', 'store', 'destroy'
     ]);
 
-    // 5. CUSTOM ROUTE FOR ADMIN STATUS UPDATES (Accept/Complete)
+    // 5. CUSTOM STATUS/ACTION ROUTES
     Route::post('/requests/{maintenanceRequest}/status', [MaintenanceRequestController::class, 'updateStatus'])
         ->name('requests.update_status');
-
-    // 6. CUSTOM ROUTE FOR CLIENT COMPLETION
     Route::post('/requests/{maintenanceRequest}/complete', [MaintenanceRequestController::class, 'clientComplete'])
         ->name('requests.client_complete');
-
-       Route::delete('/requests/{maintenanceRequest}', [MaintenanceRequestController::class, 'destroy'])
-        ->name('requests.destroy.explicit');
 });
