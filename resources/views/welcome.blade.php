@@ -54,11 +54,11 @@
                 Request Maintenance
             </h1>
             <p class="text-muted mb-4">
-                Sign in to quickly submit and track your repair and facility requests.
+                Sign in to quickly submit and track your repair requests.
             </p>
 
             <!-- Form setup for Laravel authentication -->
-            <form method="POST" action=>
+            <form method="POST" action="{{ route('login') }}">
                 @csrf <!-- Laravel CSRF Protection -->
 
                 <!-- Email Field -->
