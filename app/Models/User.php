@@ -45,4 +45,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function maintenanceRequests()
+{
+    // A User can have many Maintenance Requests, linked by the 'user_id' column
+    return $this->hasMany(MaintenanceRequest::class);
+}
 }
