@@ -125,4 +125,20 @@ class MaintenanceRequestController extends Controller
         return redirect()->route('dashboard')
             ->with('success', "Request #{$maintenanceRequest->id} has been deleted.");
     }
+
+     public function apiIndex(Request $request)
+    {
+        // Get the client identified by the Sanctum token
+        $user = $request->user();
+
+        // Fetch requests associated with this user
+        $requests = $user->maintenanceRequests()
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        // Return the data as JSON
+        return response()->json([
+            'requests' => $requests
+        ]);
+    }
 }
