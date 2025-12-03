@@ -14,25 +14,37 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validate the login request data (email and password must be present)
         $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        // 2. Attempt to authenticate the user using the provided credentials
-        // The $request->boolean('remember') handles the "Remember Me" checkbox.
+        // 1. Attempt to authenticate the user
         if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            // If authentication fails, throw a validation error back to the form
+            // If authentication FAILS (bad credentials)
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'), // Laravel's default failure message
+                'email' => trans('auth.failed'), 
             ]);
         }
 
-        // 3. Regenerate the session ID for security
+        // 2. CRITICAL ROLE CHECK: Authentication succeeded, now check the role.
+        $user = Auth::user();
+
+        if ($user->role !== 'admin') {
+            // If the user is a 'client', immediately log them out.
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            // Throw a general failure message to hide the actual reason, maintaining security.
+            throw ValidationException::withMessages([
+                'email' => 'Access denied. Only administrators are allowed to log in via the web portal.', 
+            ]);
+        }
+        
+        // 3. User is an Admin. Regenerate the session and grant access.
         $request->session()->regenerate();
 
-        // 4. Redirect the user to the intended URL (which we set as 'dashboard')
         return redirect()->intended(route('dashboard'));
     }
 
@@ -41,16 +53,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
-        // Log the user out of the 'web' guard
         Auth::guard('web')->logout();
 
-        // Invalidate the current session
         $request->session()->invalidate();
-
-        // Regenerate the CSRF token
         $request->session()->regenerateToken();
 
-        // Redirect the user back to the welcome/login page
         return redirect('/');
     }
 }

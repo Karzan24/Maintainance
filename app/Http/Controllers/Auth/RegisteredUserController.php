@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User; // CRITICAL: Ensure User Model is imported
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +16,6 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        // Loads the view file at: resources/views/register.blade.php
         return view('register'); 
     }
 
@@ -25,12 +24,10 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validate the incoming data
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            // 'confirmed' ensures 'password' matches 'password_confirmation'
-            'password' => ['required', 'confirmed', Rules\Password::defaults()], 
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         // 2. Create the user record in the MySQL database
@@ -38,12 +35,13 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'admin', // <-- CRITICAL FIX: Set role to 'admin' for web registration
         ]);
 
-        // 3. Log the newly created user in immediately
+        // Log the newly created user in
         Auth::login($user);
 
-        // 4. Redirect the user to the dashboard
+        // Redirect them to the dashboard
         return redirect(route('dashboard'));
     }
 }

@@ -15,8 +15,19 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            
+            // --- ADDED FIELDS FOR UNIFIED USER MODEL ---
+            // Phone number for mobile clients/contact, must be unique but nullable.
+            $table->string('phone_number')->nullable()->unique(); 
+            
             $table->timestamp('email_verified_at')->nullable();
+            
             $table->string('password');
+            
+            // Role to differentiate between web admins and mobile clients
+            $table->enum('role', ['admin', 'client'])->default('client'); 
+            // -------------------------------------------
+            
             $table->rememberToken();
             $table->timestamps();
         });
