@@ -1,9 +1,16 @@
 <?php
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController; // Handles client login/register/logout
-use App\Http\Controllers\MaintenanceRequestController; // Handles request submissions
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\MaintenanceRequestController;
+
+
+
+Route::get('/test-api', function () {
+    return 'API working';
+});
+
+
 
 // --- PUBLIC API ROUTES (Authentication) ---
 // These routes are not protected by a token. They are used to get a token.

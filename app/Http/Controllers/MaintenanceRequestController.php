@@ -2,48 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MaintenanceRequest; 
+use App\Models\MaintenanceRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Models\User; 
 
 class MaintenanceRequestController extends Controller
 {
+    // =======================
+    // WEB DASHBOARD METHODS
+    // =======================
+
     /**
-     * Display a listing of ALL requests for the Admin/Technician Dashboard.
+     * Admin/Technician Dashboard - view all requests
      */
     public function index()
     {
-        // Fetch the current user object for the view
-        $user = Auth::user(); 
-        
-        // 1. Fetch all requests, eager-loading the associated user data
+        $user = Auth::user();
+
         $allRequests = MaintenanceRequest::with('user')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 2. Calculate Dashboard Statistics
         $stats = [
             'total_requests' => $allRequests->count(),
             'today_requests' => MaintenanceRequest::whereDate('created_at', today())->count(),
-            'pending_requests' => $allRequests->whereIn('status', ['pending', 'in_progress'])->count(), 
+            'pending_requests' => $allRequests->whereIn('status', ['pending', 'in_progress'])->count(),
             'done_requests' => $allRequests->where('status', 'completed')->count(),
         ];
-        
-        // --- REMOVED: $userRequests definition unnecessary for Admin Dashboard ---
 
-        // 3. Pass data to the dashboard view
         return view('dashboard', [
             'requests' => $allRequests,
             'stats' => $stats,
-            'user' => $user, 
-            // --- REMOVED: Passing $userRequests is unnecessary ---
+            'user' => $user,
         ]);
     }
 
     /**
-     * Display a listing of requests submitted by the currently authenticated user (Client View).
+     * Client Dashboard - view only their requests
      */
     public function clientIndex()
     {
@@ -57,7 +52,7 @@ class MaintenanceRequestController extends Controller
     }
 
     /**
-     * Show the form for creating a new maintenance request.
+     * Show the form to create a request (web)
      */
     public function create()
     {
@@ -65,7 +60,7 @@ class MaintenanceRequestController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a new request (web)
      */
     public function store(Request $request)
     {
@@ -82,20 +77,24 @@ class MaintenanceRequestController extends Controller
             ->with('success', 'Maintenance request submitted successfully!');
     }
 
+    /**
+     * Update status (web)
+     */
     public function updateStatus(Request $request, MaintenanceRequest $maintenanceRequest)
     {
         $validated = $request->validate([
             'new_status' => 'required|in:pending,in_progress,completed,rejected',
         ]);
 
-        $maintenanceRequest->update([
-            'status' => $validated['new_status']
-        ]);
+        $maintenanceRequest->update(['status' => $validated['new_status']]);
 
         return redirect()->route('dashboard')
             ->with('success', "Request #{$maintenanceRequest->id} status updated successfully.");
     }
 
+    /**
+     * Client marks as complete (web)
+     */
     public function clientComplete(MaintenanceRequest $maintenanceRequest)
     {
         if ($maintenanceRequest->user_id !== Auth::id()) {
@@ -111,6 +110,9 @@ class MaintenanceRequestController extends Controller
         return redirect()->route('my_requests')->with('success', "Request #{$maintenanceRequest->id} marked as Completed!");
     }
 
+    /**
+     * Delete request (web)
+     */
     public function destroy($id)
     {
         $maintenanceRequest = MaintenanceRequest::find($id);
@@ -126,19 +128,67 @@ class MaintenanceRequestController extends Controller
             ->with('success', "Request #{$maintenanceRequest->id} has been deleted.");
     }
 
-     public function apiIndex(Request $request)
+    // =======================
+    // API METHODS FOR FLUTTER
+    // =======================
+
+    /**
+     * Fetch requests for the authenticated user (Flutter)
+     */
+    public function apiIndex(Request $request)
     {
-        // Get the client identified by the Sanctum token
         $user = $request->user();
 
-        // Fetch requests associated with this user
         $requests = $user->maintenanceRequests()
             ->orderBy('created_at', 'desc')
             ->get();
-            
-        // Return the data as JSON
+
+        return response()->json(['requests' => $requests]);
+    }
+
+    /**
+     * Submit new request via API (Flutter)
+     */
+    public function apiStore(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'location' => 'required|string|max:255',
+            'priority' => 'required|string|in:low,medium,high,urgent',
+        ]);
+
+        $requestModel = $user->maintenanceRequests()->create([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'location' => $validated['location'],
+            'priority' => $validated['priority'],
+            'status' => 'pending',
+        ]);
+
         return response()->json([
-            'requests' => $requests
+            'success' => true,
+            'request' => $requestModel
+        ], 201);
+    }
+
+    /**
+     * Mark a request as complete via API (Flutter)
+     */
+    public function completeRequest($id, Request $request)
+    {
+        $user = $request->user();
+
+        $requestModel = $user->maintenanceRequests()->where('id', $id)->firstOrFail();
+
+        $requestModel->status = 'completed';
+        $requestModel->save();
+
+        return response()->json([
+            'success' => true,
+            'request' => $requestModel
         ]);
     }
 }

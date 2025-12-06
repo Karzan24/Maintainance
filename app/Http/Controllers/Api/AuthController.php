@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\User; // <-- CRITICAL FIX: Missing User Model Import
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -52,6 +52,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        // This line requires the User model to be imported.
         $user = User::where('email', $request->email)->first();
 
         // 1. Check credentials
