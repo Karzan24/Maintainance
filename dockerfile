@@ -18,5 +18,5 @@ RUN composer install --no-dev --optimize-autoloader
 # Give permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Start the application
+# Start the applications
 CMD ["/start.sh"]
