@@ -20,6 +20,3 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 # Start the applications
 CMD ["/start.sh"]
-
-# Copy our custom nginx config into the container
-COPY nginx.conf /etc/nginx/sites-available/default.conf
